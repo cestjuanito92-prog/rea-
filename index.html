@@ -6,110 +6,259 @@
   <title>Valentine</title>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
   <style>
-    :root { --bg1: #ffd6e7; --bg2: #ffeef6; --card: #ffffffcc; --yes: #ff3b7a; --yesHover: #ff1f68; }
-    * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100svh; display: grid; place-items: center; background: radial-gradient(circle at top, var(--bg2), var(--bg1)); font-family: system-ui, sans-serif; overflow: hidden; padding: 16px; }
-    .card { width: min(720px, 92vw); padding: 26px 22px; background: var(--card); backdrop-filter: blur(10px); border-radius: 22px; text-align: center; box-shadow: 0 18px 60px rgba(0,0,0,.15); position: relative; z-index: 10; }
-    .art { width: min(200px, 60vw); margin: 0 auto 10px; display: block; }
-    h1 { font-size: clamp(22px, 3.8vw, 40px); margin: 12px 0 18px; line-height: 1.15; }
-    .button-zone { position: relative; width: 100%; height: 200px; margin: 0 auto; touch-action: none; }
-    button { position: absolute; top: 50%; transform: translateY(-50%); padding: 16px 24px; font-size: 18px; font-weight: 800; border-radius: 999px; border: none; cursor: pointer; box-shadow: 0 10px 24px rgba(0,0,0,.14); user-select: none; transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275); white-space: nowrap; }
-    #yesBtn { left: 15%; background: var(--yes); color: #fff; z-index: 20; }
-    #noBtn { left: 60%; background: #e5e7eb; color: #111827; transition: left 0.2s ease, top 0.2s ease; }
-    .result { display: none; margin-top: 18px; animation: pop .35s ease; }
-    @keyframes pop { from { transform: scale(.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-    .cats { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
-    .cats img { width: 110px; height: 110px; object-fit: cover; border-radius: 14px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-    #typedText { font-size: clamp(24px, 4vw, 36px); font-weight: 900; color: #ff3b7a; margin: 0; }
+    /* --- COULEURS ET CONFIGURATION DE BASE --- */
+    :root {
+      --bg1: #ffd6e7;      /* Rose clair pour le dégradé */
+      --bg2: #ffeef6;      /* Rose encore plus clair */
+      --card: #ffffffcc;   /* Fond de la carte (blanc transparent) */
+      --yes: #ff3b7a;      /* Rose vif pour le bouton OUI */
+      --yesHover: #ff1f68; /* Rose plus foncé au survol du OUI */
+    }
+    * { box-sizing: border-box; } /* Pour que les tailles incluent les bordures */
+    body {
+      margin: 0;
+      min-height: 100svh; /* Prend toute la hauteur de l'écran */
+      display: grid;
+      place-items: center; /* Centre tout le contenu */
+      background: radial-gradient(circle at top, var(--bg2), var(--bg1)); /* Joli dégradé */
+      font-family: system-ui, sans-serif; /* Police par défaut du système */
+      overflow: hidden; /* Empêche le défilement */
+      padding: 16px;
+    }
+
+    /* --- LA CARTE PRINCIPALE --- */
+    .container {
+      position: relative;
+      z-index: 10; /* Pour être au-dessus des confettis */
+      width: min(720px, 92vw); /* Largeur adaptative */
+      padding: 40px 30px;
+      background: var(--card);
+      backdrop-filter: blur(10px); /* Effet de flou derrière la carte */
+      border-radius: 30px; /* Coins arrondis */
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15); /* Ombre douce */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 500px; /* Hauteur minimum pour que ce soit joli */
+    }
+
+    /* --- LE PETIT PERSONNAGE MIGNON (Quby) --- */
+    .sticker {
+      width: 180px;
+      height: 180px;
+      object-fit: contain; /* Pour ne pas déformer l'image */
+      margin-bottom: 20px;
+      /* Petite animation de flottement */
+      animation: float 3s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-15px); }
+    }
+
+    /* --- LE TITRE ET LE TEXTE --- */
+    h1 {
+      font-size: clamp(24px, 5vw, 42px); /* Taille de police qui s'adapte */
+      font-weight: 800;
+      color: #1f2937; /* Gris foncé */
+      margin: 0 0 8px 0;
+      line-height: 1.2;
+      padding: 0 10px;
+    }
+
+    /* --- LA ZONE DES BOUTONS --- */
+    .button-zone {
+      position: relative;
+      width: 100%;
+      height: 220px; /* Espace pour que le bouton "on verra" puisse bouger */
+      margin-top: 30px;
+      /* Empêche les actions tactiles par défaut (zoom, scroll) dans cette zone */
+      touch-action: none;
+    }
+
+    /* --- STYLE DES BOUTONS --- */
+    button {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%); /* Centre verticalement */
+      padding: 18px 36px;
+      font-size: 20px;
+      font-weight: 700;
+      border-radius: 999px; /* Boutons bien ronds */
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1); /* Transition fluide */
+      white-space: nowrap; /* Le texte reste sur une ligne */
+      /* Empêche la sélection du texte sur le bouton */
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Bouton OUI */
+    #yesBtn {
+      left: calc(50% - 150px); /* Position initiale à gauche */
+      background: var(--yes);
+      color: white;
+      box-shadow: 0 10px 15px -3px rgba(255, 59, 122, 0.3), 0 4px 6px -2px rgba(255, 59, 122, 0.1);
+    }
+    #yesBtn:hover {
+      background: var(--yesHover);
+      transform: translateY(-52%) scale(1.02); /* Petit effet au survol */
+      box-shadow: 0 20px 25px -5px rgba(255, 59, 122, 0.4), 0 10px 10px -5px rgba(255, 59, 122, 0.2);
+    }
+
+    /* Bouton "on verra" */
+    #noBtn {
+      left: calc(50% + 50px); /* Position initiale à droite */
+      background: #f3f4f6;
+      color: #4b5563;
+      /* Transition plus lente pour le mouvement de fuite */
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* --- LE TEXTE "réponds bien..." EN BAS --- */
+    .reponds-bien {
+      font-size: 16px;
+      color: #6b7280; /* Gris moyen */
+      font-style: italic;
+      margin-top: 20px; /* Espace au-dessus */
+      font-weight: 500;
+    }
+
+    /* --- PAGE DE RÉSULTAT (après le OUI) --- */
+    .result {
+      display: none; /* Caché au départ */
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      animation: fadeIn 0.5s ease-out; /* Apparition en douceur */
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* Le GIF de Quby content */
+    .result-sticker {
+      width: 220px;
+      height: 220px;
+      object-fit: contain;
+      margin-bottom: 25px;
+    }
+    
+    /* Le texte de victoire */
+    #typedText {
+      font-size: clamp(28px, 5vw, 48px);
+      font-weight: 900;
+      color: var(--yes); /* Couleur rose vif */
+      margin: 0;
+      text-shadow: 2px 2px 4px rgba(255, 59, 122, 0.2);
+    }
   </style>
 </head>
 <body>
-  <main class="card">
-    <div id="main-content">
-        <img class="art" src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJueGZ3bmZicm90eXBtZzU0NHpneHBoZTRueGZ6bmZueGZ6bmZueCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/cLS1cfxvGOPVpf9g3y/giphy.gif" alt="Cute animal">
+  <main class="container">
+    <div id="main-content" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+        <img class="sticker" src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOGJzbzluZ2s3Y3Q0cHV4Z3V4Z3V4Z3V4Z3V4Z3V4Z3V4Z3V4ZSZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/iJDLj71T6k18ZqgD2j/giphy.gif" alt="Quby avec un cœur">
         <h1>REA, acceptes-tu d’être ma valentine ?</h1>
+        
         <section class="button-zone" id="zone">
           <button id="yesBtn">OUI !</button>
           <button id="noBtn">on verra</button>
         </section>
+
+        <p class="reponds-bien">réponds bien...</p>
     </div>
 
     <section class="result" id="result">
-      <div class="cats">
-        <img src="https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif">
-        <img src="https://media.giphy.com/media/mlvseq9yvZhba/giphy.gif">
-        <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZzhic3R4Z3R4Z3R4Z3R4Z3R4Z3R4Z3R4Z3R4Z3R4Z3R4Z3R4Z3R4Z3ZSZW5mJmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/1000/giphy.gif">
-        <img src="https://media.giphy.com/media/ICOgLC66v6vO60Hogz/giphy.gif">
-      </div>
+      <img class="result-sticker" src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZ3R4Z3R4Z3R4Z3R4Z3R4Z3R4Z3R4Z3R4Z3R4Z3R4Z3R4Z3R4Z3ZSZW5mJmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1z/MeIUl8P6W03pB0Z5sE/giphy.gif" alt="Quby content qui danse">
       <h2 id="typedText">t'avais intérêt <3</h2>
     </section>
   </main>
 
   <script>
+    // On récupère les éléments du HTML pour les contrôler
     const yesBtn = document.getElementById("yesBtn");
     const noBtn = document.getElementById("noBtn");
     const result = document.getElementById("result");
     const mainContent = document.getElementById("main-content");
     const zone = document.getElementById("zone");
 
-    let yesScale = 1;
+    let yesScale = 1; // Taille initiale du bouton OUI
 
+    // --- FONCTION POUR FAIRE BOUGER LE BOUTON "on verra" ---
     function moveNo() {
-        const padding = 20;
-        const x = Math.random() * (zone.offsetWidth - noBtn.offsetWidth - (padding * 2)) + padding;
-        const y = Math.random() * (zone.offsetHeight - noBtn.offsetHeight - (padding * 2)) + padding;
+        // Calcule une nouvelle position aléatoire DANS la zone prévue
+        // On laisse une marge de 10% sur les bords pour qu'il ne sorte pas
+        const x = Math.random() * (zone.offsetWidth * 0.8) + (zone.offsetWidth * 0.1) - (noBtn.offsetWidth / 2);
+        const y = Math.random() * (zone.offsetHeight * 0.8) + (zone.offsetHeight * 0.1) - (noBtn.offsetHeight / 2);
         
-        noBtn.style.left = x + "px";
-        noBtn.style.top = y + "px";
+        // Applique la nouvelle position
+        noBtn.style.left = `${x}px`;
+        noBtn.style.top = `${y}px`;
         
-        // Fait grossir le bouton OUI
-        yesScale += 0.2;
+        // Fait grossir le bouton OUI à chaque fois (+10%)
+        yesScale += 0.10;
         yesBtn.style.transform = `translateY(-50%) scale(${yesScale})`;
     }
 
-    // Détection de proximité pour que le bouton bouge AVANT qu'on ne le touche
+    // --- DÉTECTION DE LA SOURIS (PROXIMITÉ) ---
+    // Vérifie la position de la souris en permanence
     document.addEventListener("mousemove", (e) => {
-        const rect = noBtn.getBoundingClientRect();
-        const distance = Math.hypot(e.clientX - (rect.left + rect.width/2), e.clientY - (rect.top + rect.height/2));
+        const rect = noBtn.getBoundingClientRect(); // Position actuelle du bouton
+        // Centre du bouton
+        const btnCenterX = rect.left + rect.width / 2;
+        const btnCenterY = rect.top + rect.height / 2;
         
-        if (distance < 100) { // Si la souris est à moins de 100 pixels
+        // Calcule la distance entre la souris et le centre du bouton
+        const distance = Math.hypot(e.clientX - btnCenterX, e.clientY - btnCenterY);
+        
+        // Si la souris est à moins de 120 pixels, le bouton s'enfuit !
+        if (distance < 120) {
             moveNo();
         }
     });
 
-    // Pour le tactile (mobile)
+    // --- POUR LE MOBILE (TACTILE) ---
+    // Si on essaie de toucher le bouton, il s'enfuit aussi
     noBtn.addEventListener("touchstart", (e) => {
-        e.preventDefault();
+        e.preventDefault(); // Empêche le clic
         moveNo();
     });
 
+    // --- QUAND ON CLIQUE SUR "OUI !" ---
     yesBtn.addEventListener("click", () => {
+      // Cache la page de demande
       mainContent.style.display = "none";
-      result.style.display = "block";
+      // Affiche la page de résultat
+      result.style.display = "flex";
       
-      // Confettis qui tournent en boucle (non-stop)
-      const end = Date.now() + (1000 * 60 * 5); // 5 minutes de fête !
+      // --- LANCEMENT DES CONFETTIS ---
+      const duration = 15 * 1000; // Durée : 15 secondes
+      const animationEnd = Date.now() + duration;
+      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
 
-      (function frame() {
-        confetti({
-          particleCount: 3,
-          angle: 60,
-          spread: 55,
-          origin: { x: 0 },
-          colors: ['#ff3b7a', '#ffadad', '#ffd6e7']
-        });
-        confetti({
-          particleCount: 3,
-          angle: 120,
-          spread: 55,
-          origin: { x: 1 },
-          colors: ['#ff3b7a', '#ffadad', '#ffd6e7']
-        });
+      function randomInRange(min, max) {
+        return Math.random() * (max - min) + min;
+      }
 
-        if (Date.now() < end) {
-          requestAnimationFrame(frame);
+      // Lance des confettis toutes les 250ms
+      const interval = setInterval(function() {
+        const timeLeft = animationEnd - Date.now();
+
+        if (timeLeft <= 0) {
+          return clearInterval(interval); // Arrête à la fin du temps
         }
-      }());
+
+        const particleCount = 50 * (timeLeft / duration);
+        // Deux jets de confettis depuis des positions aléatoires
+        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+      }, 250);
     });
   </script>
 </body>
